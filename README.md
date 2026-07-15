@@ -2,6 +2,10 @@
 
 基于 C++17、YOLO11 ONNX、ONNX Runtime 和 OpenCV 的实时人脸摸摸头程序。
 
+<p align="center">
+  <img src="assets/petpet.gif" alt="PetPet Face 演示效果" width="720">
+</p>
+
 ## 功能
 
 - 本地视频处理，默认保留原视频音频
@@ -66,3 +70,9 @@ GUI：
 
 处理视频音频需要 `tools/ffmpeg.exe`。程序按相对路径自动查找。
 
+## 模型说明
+
+`models/face/face_yolo11s.onnx` 是本项目使用的人脸检测模型，
+由 YOLO11s 模型训练并导出为 ONNX 格式。
+
+模型用于本地人脸区域检测，不上传用户的视频、图片或摄像头数据。
