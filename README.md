@@ -66,6 +66,3 @@ GUI：
 
 处理视频音频需要 `tools/ffmpeg.exe`。程序按相对路径自动查找。
 
-## 发布
-
-上传步骤见 [UPLOAD_TO_GITHUB.md](UPLOAD_TO_GITHUB.md)。
