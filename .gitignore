@@ -1,0 +1,28 @@
+# CMake / Visual Studio
+cpp/build/
+build/
+out/
+.vs/
+CMakeUserPresets.json
+*.user
+*.suo
+*.obj
+*.lib
+*.pdb
+
+# Generated media
+input/*
+!input/.gitkeep
+output/*
+!output/.gitkeep
+
+# Third-party runtime binaries belong in GitHub Releases
+tools/*.exe
+*.dll
+*.zip
+
+# Editor / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
