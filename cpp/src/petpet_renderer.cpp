@@ -1,4 +1,4 @@
-#include "petpet_face/petpet_renderer.hpp"
+﻿#include "petpet_face/petpet_renderer.hpp"
 
 #include <algorithm>
 #include <array>
@@ -11,6 +11,84 @@
 
 namespace petpet_face
 {
+namespace
+{
+
+cv::Rect makeEffectRegion(
+    const cv::Rect &face,
+    const cv::Size &imageSize)
+{
+    // 只适度扩大脸部形变范围。
+    // 顶部扩展过大会把头发一起做仿射形变，产生“重复头发”。
+    const int expandLeftRight =
+        static_cast<int>(std::lround(face.width * 0.10));
+    const int expandTop =
+        static_cast<int>(std::lround(face.height * 0.05));
+    const int expandBottom =
+        static_cast<int>(std::lround(face.height * 0.10));
+
+    cv::Rect expanded(
+        face.x - expandLeftRight,
+        face.y - expandTop,
+        face.width + expandLeftRight * 2,
+        face.height + expandTop + expandBottom);
+
+    return expanded & cv::Rect(0, 0, imageSize.width, imageSize.height);
+}
+
+} // namespace
+
+namespace
+{
+
+void featherTransparentCanvasEdges(cv::Mat &bgra)
+{
+    if (bgra.empty() || bgra.channels() != 4)
+    {
+        return;
+    }
+
+    // 按手部画布尺寸计算羽化宽度。只修改 Alpha，不模糊手本身。
+    const int minimumSide = std::min(bgra.cols, bgra.rows);
+    const int featherWidth = std::clamp(
+        static_cast<int>(std::lround(minimumSide * 0.055)),
+        6,
+        28);
+
+    for (int y = 0; y < bgra.rows; ++y)
+    {
+        cv::Vec4b *row = bgra.ptr<cv::Vec4b>(y);
+        const int distanceTop = y;
+        const int distanceBottom = bgra.rows - 1 - y;
+
+        for (int x = 0; x < bgra.cols; ++x)
+        {
+            const int distanceLeft = x;
+            const int distanceRight = bgra.cols - 1 - x;
+            const int edgeDistance = std::min({
+                distanceLeft,
+                distanceRight,
+                distanceTop,
+                distanceBottom});
+
+            if (edgeDistance >= featherWidth)
+            {
+                continue;
+            }
+
+            float progress = static_cast<float>(edgeDistance) /
+                             static_cast<float>(featherWidth);
+
+            // smoothstep，避免线性羽化产生可见亮边。
+            progress = progress * progress * (3.0F - 2.0F * progress);
+
+            row[x][3] = cv::saturate_cast<unsigned char>(
+                static_cast<float>(row[x][3]) * progress);
+        }
+    }
+}
+
+} // namespace
 
 PetPetRenderer::PetPetRenderer(
     const std::filesystem::path &framesDirectory,
@@ -72,19 +150,57 @@ void PetPetRenderer::render(
 
     for (const cv::Rect &face : faces)
     {
-        deformFace(image, face, elapsedMs, config_.frameDurationMs);
+        const cv::Rect effectRegion =
+            makeEffectRegion(face, image.size());
 
-        const int width = std::max(1,
-            static_cast<int>(std::lround(face.width * config_.widthScale)));
-        const int height = std::max(1,
+        // 形变只适度扩大到脸部边缘，避免头发被重复形变。
+        deformFace(
+            image,
+            effectRegion,
+            elapsedMs,
+            config_.frameDurationMs);
+
+        // 原手部素材相对检测框偏大，这里缩小约 18%。
+        constexpr float handSizeAdjustment = 0.82F;
+        const int width = std::max(
+            1,
             static_cast<int>(std::lround(
-                width * static_cast<double>(animationFrame.rows) / animationFrame.cols)));
-        cv::Mat resized;
-        cv::resize(animationFrame, resized, cv::Size(width, height), 0.0, 0.0, cv::INTER_AREA);
+                face.width *
+                config_.widthScale *
+                handSizeAdjustment)));
+        const int height = std::max(
+            1,
+            static_cast<int>(std::lround(
+                width *
+                static_cast<double>(animationFrame.rows) /
+                animationFrame.cols)));
 
-        const int left = face.x + face.width / 2 - width / 2;
-        const int top = face.y - static_cast<int>(
-            std::lround(height * config_.verticalOffsetRatio));
+        cv::Mat resized;
+        cv::resize(
+            animationFrame,
+            resized,
+            cv::Size(width, height),
+            0.0,
+            0.0,
+            cv::INTER_AREA);
+
+        // 某些 PetPet PNG 的画布最外圈并非完全透明。
+        // 对缩放后的 Alpha 边缘做羽化，隐藏矩形画布边界。
+        featherTransparentCanvasEdges(resized);
+
+        // 手仍以原始人脸中心对齐，避免扩展框导致左右漂移。
+        const int left =
+            face.x + face.width / 2 - width / 2;
+
+        // 在原配置基础上额外上移，让手落在头顶而不是眼睛和脸颊。
+        constexpr float extraUpwardOffset = 0.08F;
+        const int top =
+            effectRegion.y -
+            static_cast<int>(std::lround(
+                height *
+                (config_.verticalOffsetRatio +
+                 extraUpwardOffset)));
+
         alphaBlend(image, resized, left, top);
     }
 }

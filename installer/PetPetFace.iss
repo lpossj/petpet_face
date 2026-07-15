@@ -1,10 +1,7 @@
 #define MyAppName "PetPet Face"
-#define MyAppVersion "0.0.1"
+#define MyAppVersion "0.0.2"
 #define MyAppPublisher "lpossj"
 #define MyAppExeName "PetPetFace.exe"
-
-#define GpuPackageUrl "https://github.com/lpossj/VideoPrivacy_optionalGPUcomponents/releases/download/v0.0.1/VideoPrivacy-GPU-Runtime-v0.0.1-CUDA12-cuDNN9-x64.zip"
-#define GpuPackageHash "7EFAE8571F4E216E2C1153617247A09CF8F2437D73141DE55354D3E92AFF2083"
 
 [Setup]
 AppId={{8F34F0A3-79E7-4F1B-9F9E-1BF15E6E77C2}
@@ -21,8 +18,6 @@ OutputBaseFilename=PetPet-Face-Setup-v{#MyAppVersion}-x64
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
-ArchiveExtraction=full
-AlwaysShowComponentsList=yes
 ShowLanguageDialog=no
 DisableDirPage=no
 AppendDefaultDirName=yes
@@ -36,18 +31,8 @@ VersionInfoProductVersion={#MyAppVersion}
 [Languages]
 Name: "chinesesimp"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 
-[Types]
-Name: "cpu"; Description: "标准安装（CPU，推荐）"
-Name: "full"; Description: "完整安装（CPU + NVIDIA GPU）"
-Name: "custom"; Description: "自定义安装"; Flags: iscustom
-
-[Components]
-Name: "core"; Description: "PetPet Face 核心程序、OpenCV、模型和 FFmpeg"; Types: cpu full custom; Flags: fixed
-Name: "gpu"; Description: "NVIDIA GPU 加速组件（联网下载约 1.54 GB）"; Types: full
-
 [Files]
-Source: "..\..\release\PetPet-Face-v0.0.1-Windows-x64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: core
-Source: "{#GpuPackageUrl}"; DestName: "PetPet-Face-GPU-Runtime-CUDA12-cuDNN9-x64.zip"; DestDir: "{app}"; Hash: "{#GpuPackageHash}"; ExternalSize: 2_479_111_734; Flags: external download extractarchive recursesubdirs createallsubdirs ignoreversion; Components: gpu
+Source: "..\..\release\PetPet-Face-v0.0.2-Windows-x64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Dirs]
 Name: "{app}\input"

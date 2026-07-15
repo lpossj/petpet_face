@@ -15,6 +15,17 @@ input/*
 !input/.gitkeep
 output/*
 !output/.gitkeep
+recordings/
+
+# Local runtime state
+settings.ini
+*.log
+
+# Local secrets
+.env
+.env.*
+*.pem
+*.key
 
 # Third-party runtime binaries belong in GitHub Releases
 tools/*.exe

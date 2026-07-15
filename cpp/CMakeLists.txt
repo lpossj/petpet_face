@@ -69,6 +69,7 @@ if(WIN32)
         dwmapi
         shell32
         ole32
+        winhttp
         oleaut32
         strmiids)
     if(MSVC)
